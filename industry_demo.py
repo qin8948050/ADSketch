@@ -3,6 +3,8 @@ import json
 import logging
 import argparse
 
+import numpy as np
+
 from dataset_loader import *
 from adsketch.motif_operations import *
 
@@ -31,25 +33,32 @@ def offline_industry_data():
     logging.info('{}{}{}'.format('^' * 15, ' Offline anomaly detection for Industry ', '^' * 15))
     industry_params = params['industry']
     normal_point, offline_point = 1440, 5760
-
+    metric_names = list(industry_params.keys())
+    precisions=np.array([])
+    recalls=np.array([])
+    f1_scores=np.array([])
     # Model parameters
-    metric_name = 'e59c1d14'
-    m, p = industry_params[metric_name]["m"], industry_params[metric_name]["p"]
-    fig_dir = os.path.join(args['res_dir'], f'{metric_name}_{m}_{p}_offline.png')
-    offline_pattern_dir = os.path.join(args['pattern_dir'], f'{metric_name}_{m}_{p}.pkl')
+    for metric_name in metric_names:
+        # metric_name = 'e59c1d14'
+        m, p = industry_params[metric_name]["m"], industry_params[metric_name]["p"]
+        fig_dir = os.path.join(args['res_dir'], f'{metric_name}_{m}_{p}_offline.png')
+        offline_pattern_dir = os.path.join(args['pattern_dir'], f'{metric_name}_{m}_{p}.pkl')
 
-    metric_values, metric_labels = load_industry_data(metric_name)
-    # Select particular segments of data
-    train_metric_values, test_metric_values = metric_values[:normal_point], metric_values[normal_point:offline_point]
-    train_metric_labels, test_metric_labels = metric_labels[:normal_point], metric_labels[normal_point:offline_point]
+        metric_values, metric_labels = load_industry_data(metric_name)
+        # Select particular segments of data
+        train_metric_values, test_metric_values = metric_values[:normal_point], metric_values[normal_point:offline_point]
+        train_metric_labels, test_metric_labels = metric_labels[:normal_point], metric_labels[normal_point:offline_point]
 
-    logging.info('=' * 60)
-    logging.info(f'Dataset: industry ({metric_name}), m: {m}, p: {p}')
+        logging.info('=' * 60)
+        logging.info(f'Dataset: industry ({metric_name}), m: {m}, p: {p}')
 
-    offline_anomaly_detection(m, p,
-                              train_metric_values, test_metric_values, test_metric_labels,
-                              offline_pattern_dir, fig_dir)
-
+        precision,recall,f1=offline_anomaly_detection(m, p,
+                                  train_metric_values, test_metric_values, test_metric_labels,
+                                  offline_pattern_dir, fig_dir)
+        precisions=np.append(precisions,precision)
+        recalls=np.append(recalls,recall)
+        f1_scores=np.append(f1_scores,f1)
+    print(f"final result,p:{np.mean(precisions)},r:{np.mean(recalls)},f:{np.mean(f1_scores)}")
 
 def online_industry_data():
     logging.info('{}{}{}'.format('^' * 15, ' Online anomaly detection for Industry ', '^' * 15))
@@ -86,5 +95,5 @@ def online_industry_data():
 
 
 if __name__ == '__main__':
-    # offline_industry_data()
-    online_industry_data()
+    offline_industry_data()
+    # online_industry_data()

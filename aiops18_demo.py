@@ -92,5 +92,5 @@ def online_aiops18_data():
 
 
 if __name__ == '__main__':
-    # offline_aiops18_data()
-    online_aiops18_data()
+    offline_aiops18_data()
+    # online_aiops18_data()
